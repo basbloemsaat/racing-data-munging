@@ -1,0 +1,4 @@
+requests >= 2.19.0
+python-dateutil
+
+Dumper >= 1.0.4
