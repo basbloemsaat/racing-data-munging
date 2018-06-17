@@ -33,8 +33,11 @@ def query2json(query, args=[], json_file=None):
 
 seasons = query2json(
     query='''
-        SELECT year, url
-        FROM seasons
+        SELECT s.year, s.url, count(r.raceId) as races
+        FROM 
+            seasons s
+            JOIN races r ON r.year=s.year
+        GROUP BY s.year
     ''',
     json_file='seasons.json'
 )
