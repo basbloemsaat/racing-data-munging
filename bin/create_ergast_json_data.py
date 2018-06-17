@@ -19,16 +19,16 @@ db.isolation_level = None
 def query2json(query, args=[], json_file=None):
     c = db.cursor()
     c.execute(query)
-
-    result = c.fetchall()
+    names = [d[0] for d in c.description]
+    rows = [dict(zip(names, row)) for row in c.fetchall()]
 
     if json_file:
         path = os.path.join(os.path.dirname(__file__),
                             "../data/ergast/", json_file)
         with open(path, 'w') as outfile:
-            json.dump(result, outfile)
+            json.dump(rows, outfile)
 
-    return result
+    return rows
 
 
 seasons = query2json(
@@ -43,7 +43,7 @@ seasons = query2json(
 )
 
 for season in seasons:
-    season_year = season[0]
+    season_year = season['year']
     p = Path(
         os.path.join(os.path.dirname(__file__), "../data/ergast/seasons/", str(season_year)))
     p.mkdir(
