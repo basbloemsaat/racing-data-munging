@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>io</title>
+    <style>
+    svg#all_seasons {
+        border: 1px solid red;
+    }
+    </style>
+</head>
+
+<body>
+    <h1>F1 seasons</h1>
+    <svg id="all_seasons"></svg>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+    var rdm = {};
+    (function() {
+        this.initCharts = function() {
+            var width = (window.innerWidth - 50) + 'px',
+                height = (window.innerHeight - 100) + 'px';
+            d3.select('svg#all_seasons').style('width', width).style('height', height);
+
+            rdm.loadData();
+        }
+
+        this.loadData = function() {
+            d3.json("/data/ergast/seasons.json")
+                .then(
+                    function(data) {
+                        rdm.updateSeasonsChart(data)
+                    }
+                );
+        }
+
+        this.updateSeasonsChart = function(data) {
+            console.log(data);
+        }
+    }).apply(rdm);
+
+    rdm.initCharts();
+    </script>
+</body>
+
+</html>
