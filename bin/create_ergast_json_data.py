@@ -16,7 +16,7 @@ db = sqlite3.connect(uri, uri=True)
 db.isolation_level = None
 
 
-def query2json(query, args=[], json_file=None):
+def exec_query(query, args=[], json_file=None):
     c = db.cursor()
     c.execute(query)
     names = [d[0] for d in c.description]
@@ -31,13 +31,20 @@ def query2json(query, args=[], json_file=None):
     return rows
 
 
-seasons = query2json(
+seasons = exec_query(
     query='''
-        SELECT s.year, s.url, count(r.raceId) as races
+        SELECT 
+            ra.year
+            , count(DISTINCT d.driverId) as winners
+            , count(DISTINCT ra.raceId) as races
+            , s.url
         FROM 
-            seasons s
-            JOIN races r ON r.year=s.year
-        GROUP BY s.year
+            seasons s 
+            JOIN races ra ON ra.year=s.year
+            LEFT JOIN results re ON re.raceId = ra.raceId AND re.position=1
+            LEFT JOIN drivers d ON d.driverId = re.driverId
+        GROUP BY ra.year
+        ORDER BY ra.year
     ''',
     json_file='seasons.json'
 )
