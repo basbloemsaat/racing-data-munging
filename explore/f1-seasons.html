@@ -85,7 +85,7 @@
         }
 
         this.loadData = function() {
-            d3.json("/data/ergast/seasons.json")
+            d3.json("/racing-data-munging/data/ergast/seasons.json")
                 .then(
                     function(data) {
                         rdm.updateSeasonsChart(data)
