@@ -18,7 +18,7 @@
     }
 
     rect.bar {
-        fill: blue;
+        fill: CornflowerBlue;
     }
     </style>
 </head>
@@ -58,8 +58,8 @@
 
             chart.x = d3.scaleBand().rangeRound([0, width]).padding(0.1);
             chart.x_axis = d3.axisBottom(chart.x);
-            chart.y = d3.scaleLinear().rangeRound([0, height]);
-            chart.y_axis = d3.axisLeft(chart.y).ticks(10);
+            chart.y_races = d3.scaleLinear().rangeRound([0,height]);
+            chart.y_races_axis = d3.axisLeft(chart.y_races).ticks(10);
 
             var g = svg.append("g")
                 .attr("transform",
@@ -67,7 +67,9 @@
                 );
 
             g.append('g')
-                .attr("class", "bars");
+                .attr("class", "bars")
+                .attr("transform", "translate(0," + height + ") scale(1,-1)")
+            ;
 
             g.append("g")
                 .attr("class", "axis axis--x")
@@ -76,7 +78,7 @@
 
             g.append("g")
                 .attr("class", "axis axis--y")
-                .call(chart.y_axis)
+                .call(chart.y_races_axis)
 
 
             rdm.loadData();
@@ -102,17 +104,19 @@
                 .attr("transform", "rotate(-90)")
                 .style("text-anchor", "start");
 
-            chart.y.domain([0, d3.max(data, function(d) { return d.races; })]);
-            d3.select('g.axis--y').call(chart.y_axis.ticks(10))
+            chart.y_races.domain([0, d3.max(data, function(d) { return d.races; })]);
+            d3.select('g.axis--y').call(chart.y_races_axis.ticks(10))
 
             bars = d3.select('g.bars').selectAll('.bar').data(data);
             bars.enter().append('rect')
                 .attr("class", "bar")
                 .attr("x", function(d) { return chart.x(d.year); })
-                .attr("y", function(d) { return chart.y(d.races); })
+                .attr("y", 0)
                 .attr("width", chart.x.bandwidth())
-                .attr("height", function(d) { return height - chart.y(d.races); });
-        }
+
+            bars = d3.select('g.bars').selectAll('.bar').transition()
+                .attr("height", function(d) { return chart.y_races(d.races); }); 
+       }
     }).apply(rdm);
 
     rdm.initCharts();
