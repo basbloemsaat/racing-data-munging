@@ -21,11 +21,11 @@
     }
 
     svg#all_seasons g.tick text {
-    	font-size:1.2em;
+        font-size: 1.2em;
     }
 
     svg#all_seasons g.axis--y g.tick line {
-	opacity: 0.1;
+        opacity: 0.1;
     }
 
     rect.bar {
@@ -40,6 +40,7 @@
 
 <body>
     <h1>F1 seasons</h1>
+    <h2>Number of races per season</h2>
     <svg id="all_seasons"></svg>
     <div id="all_seasons_edges"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
@@ -93,7 +94,7 @@
 
             g.append("g")
                 .attr("class", "axis axis--y")
-                .call(chart.y_races_axis .tickSize(-width) )
+                .call(chart.y_races_axis.tickSize(-width))
 
             d3.select('div#all_seasons_edges').style('position', 'relative')
             rdm.loadData();
@@ -132,7 +133,7 @@
                 .attr("y", 0)
                 .attr("width", chart.x.bandwidth())
 
-            bars = d3.select('g.bars').selectAll('.bar').transition()
+            bars = d3.select('g.bars').selectAll('.bar').transition().duration(400)
                 .attr("height", function(d) { return height - chart.y_races(d.races); });
 
         }
