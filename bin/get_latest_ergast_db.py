@@ -8,7 +8,7 @@ import requests
 import shutil
 
 url = "http://ergast.com/downloads/f1db.sql.gz"
-status_file = os.path.join(os.path.dirname(__file__), "../data/ergast/state.json")
+status_file = os.path.join(os.path.dirname(__file__), "../../racing-data-munging-prv/ergast/state.json")
 
 with open(status_file) as f:
     status = json.load(f)
@@ -24,6 +24,9 @@ status_size = status['size']
 
 if (lastmod_date > status_lastmod_date or size != status_size):
     print('Getting new ergast db');
+    os.system('rm /tmp/f1db.sql')
+    os.system('rm /tmp/f1db.sql.gz')
+
     try:
         resp = requests.get(url, stream=True)
         with open('/tmp/f1db.sql.gz', 'wb') as out_file:
@@ -32,7 +35,7 @@ if (lastmod_date > status_lastmod_date or size != status_size):
         os.system('gunzip /tmp/f1db.sql.gz -f')
 
         mysql2sqlite = os.path.join(os.path.dirname(__file__), "mysql2sqlite")
-        ergastsqlite = os.path.join(os.path.dirname(__file__), "../data/ergast/ergast_sqlite3.db")
+        ergastsqlite = os.path.join(os.path.dirname(__file__), "../../racing-data-munging-prv/ergast/ergast_sqlite3.db")
         os.system('rm ' + ergastsqlite)
         os.system(mysql2sqlite + ' /tmp/f1db.sql | sqlite3 ' + ergastsqlite)
 
