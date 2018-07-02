@@ -133,7 +133,7 @@
                 .attr("y", 0)
                 .attr("width", chart.x.bandwidth())
 
-            bars = d3.select('g.bars').selectAll('.bar').transition().duration(400)
+            bars = d3.select('g.bars').selectAll('.bar').transition().duration(800)
                 .attr("height", function(d) { return height - chart.y_races(d.races); });
 
         }
