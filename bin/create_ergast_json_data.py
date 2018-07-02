@@ -55,13 +55,60 @@ seasons = exec_query(
 
 for season in seasons:
     season_year = season['year']
-    p = Path(
-        os.path.join(os.path.dirname(__file__), "../data/ergast/seasons/", str(season_year)))
+    path_name = os.path.join(os.path.dirname(
+        __file__), "../data/ergast/seasons/", str(season_year))
+    p = Path(path_name)
     p.mkdir(
-        mode=0o666,
+        mode=0o755,
         parents=True,
         exist_ok=True
     )
+
+    season_overview = {}
+
+    season_overview['driver_standings'] = exec_query(
+        query='''
+            SELECT 
+                d.driverRef
+                , d.forename
+                , d.surname
+                , d.nationality
+                , SUM(re.points) AS points
+                , SUM(CASE WHEN position=1 THEN 1 ELSE 0 END) as wins
+                , SUM(CASE WHEN position IN (1,2,3) THEN 1 ELSE 0 END) AS podiums
+            FROM
+                drivers d
+                JOIN results re ON re.driverId = d.driverId
+                JOIN races ra ON ra.raceId = re.raceId
+                
+            WHERE ra.year = ?
+            GROUP BY driverRef
+            ORDER BY SUM(re.points) DESC
+        '''
+        , args = [season_year]
+    )
+
+    season_overview['constructor_standings'] = exec_query(
+        query='''
+            SELECT 
+                constructorRef
+                , t.name
+                , t.nationality
+                , SUM(re.points) AS points
+                , SUM(CASE WHEN position=1 THEN 1 ELSE 0 END) AS wins
+                , SUM(CASE WHEN position IN (1,2,3) THEN 1 ELSE 0 END) AS podiums
+            FROM
+                constructors t
+                JOIN results re ON re.constructorId = t.constructorId
+                JOIN races ra ON ra.raceId = re.raceId
+            WHERE ra.year = ?
+            GROUP BY constructorRef
+            ORDER BY SUM(re.points) DESC
+        '''
+        , args = [season_year]
+    )
+
+    save_to_json(season_overview, 'seasons/' + str(season_year) + '/overview.json')
 
 drivers = exec_query(
     query='''
