@@ -35,7 +35,7 @@ if (lastmod_date > status_lastmod_date or size != status_size):
         os.system('gunzip /tmp/f1db.sql.gz -f')
 
         mysql2sqlite = os.path.join(os.path.dirname(__file__), "mysql2sqlite")
-        ergastsqlite = os.path.join(os.path.dirname(__file__), "../../racing-data-munging-prv/ergast/ergast_sqlite3.db")
+        ergastsqlite = os.path.join(os.path.dirname(__file__), "../../racing-data-munging-prv/ergast/ergast.sqlite3db")
         os.system('rm ' + ergastsqlite)
         os.system(mysql2sqlite + ' /tmp/f1db.sql | sqlite3 ' + ergastsqlite)
 

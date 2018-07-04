@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>io</title>
+    <title>f1 constructors</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <style>
     div#all_seasons_edges {
@@ -31,51 +31,28 @@
 </head>
 
 <body>
-    <h1 id="pagetitle">F1 season</h1>
+    <h1 id="pagetitle">F1 constructors</h1>
+    <div id="edges"></div>
     <svg id="all_seasons"></svg>
-    <div id="all_seasons_edges"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="js/rdm.js"></script>
     <script>
-    var url_string = window.location.href;
-    var url = new URL(url_string);
-    var year = url.searchParams.get("year");
-
-    d3.select('h1#pagetitle').text('F1 season ' + year);
-
-    console.log(year);
-    var chart = {
-        'data': [],
-        'x': null,
-        'x_axis': null,
-        'y': null,
-        'y_axis': null,
-        'margin': { top: 20, right: 20, bottom: 100, left: 40 },
-    };
-
-
-
-    window_margin = 30;
-
-    rdm = {};
-
-    var width, height;
-
     (function() {
         this.initCharts = function() {
             rdm.loadData();
         }
 
         this.loadData = function() {
-            var uri = "/racing-data-munging/data/ergast/seasons/" + year + "/overview.json"
+            var uri = "/racing-data-munging/data/ergast/constructors.json"
             d3.json(uri)
                 .then(
                     function(data) {
-                        rdm.updateSeasonOverviewChart(data)
+                        rdm.update_constructors_overview(data)
                     }
                 );
         }
 
-        this.updateSeasonOverviewChart = function(data) {
+        this.update_constructors_overview = function(data) {
 
         }
     }).apply(rdm);
