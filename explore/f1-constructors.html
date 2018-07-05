@@ -33,11 +33,39 @@
 <body>
     <h1 id="pagetitle">F1 constructors</h1>
     <div id="edges"></div>
-    <svg id="all_seasons"></svg>
+    <table id="list_constructors" class="table">
+        <thead>
+            <tr>
+                <th>Constructor</th>
+                <th>Nationality</th>
+                <th>Races</th>
+                <th>Wins</th>
+                <th>Podiums</th>
+                <th>First Entry</th>
+                <th>Last Entry</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="js/rdm.js"></script>
     <script>
     (function() {
+        this.reduce_functions = {
+            // "races": function(a, b) { return { "races": a.races + b.races } },
+            // "wins": function(a, b) { return { "wins": a.wins + b.wins } },
+        }
+
+        var variables = ['races', 'wins', 'podiums'];
+        for(var i = 0; i < variables.length; i++) {
+            var variable = variables[i];
+            var sum = function (variable) {
+                return function(a, b) {  var x = {}; x[variable] = a[variable] + b[variable]; return x }; 
+            }
+            this.reduce_functions[variable] = sum(variable);
+        }
+
         this.initCharts = function() {
             rdm.loadData();
         }
@@ -53,6 +81,52 @@
         }
 
         this.update_constructors_overview = function(data) {
+            console.log(data)
+            var tbody = d3.select('table#list_constructors tbody');
+            var rows = tbody.selectAll('tr').data(data);
+
+            addrows = rows.enter().append('tr');
+
+            addrows.append("td").attr("class", "name").text(
+                function(d) {
+                    // console.log(d.name);
+                    return d.name;
+                }
+            );
+
+            addrows.append("td").attr("class", "nat").text(function(d) { return d.nationality; });
+
+            addrows.append("td").attr("class", "races").text(function(d) {
+                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.races) : 0;
+                return res.races;
+            });
+
+            addrows.append("td").attr("class", "wins").text(function(d) {
+                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.wins) : 0;
+                return res.wins;
+            });
+
+            addrows.append("td").attr("class", "podiums").text(function(d) {
+                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.podiums) : 0;
+                return res.podiums;
+            });
+
+            var red_firstyear = function(a, b) {
+                return { "year": (a.year < b.year ? a.year : b.year) }
+            }
+            addrows.append("td").attr("class", "firstyear").text(function(d) {
+                var res = d.years_active.length ? d.years_active.reduce(red_firstyear) : 0;
+                return res.year;
+            });
+
+            var red_lastyear = function(a, b) {
+                return { "year": (a.year > b.year ? a.year : b.year) }
+            }
+            addrows.append("td").attr("class", "lastyear").text(function(d) {
+                var res = d.years_active.length ? d.years_active.reduce(red_lastyear) : 0;
+                return res.year;
+            });
+
 
         }
     }).apply(rdm);
