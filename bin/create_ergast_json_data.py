@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import copy
 import json
 import os
 from pathlib import Path
@@ -176,7 +177,39 @@ for constructor in constructors:
     )
 
     constructor['years_active'] = constructor_years_active
+
+    constructor_detailed = copy.deepcopy(constructor)
+
+    constructor_results = exec_query(
+        '''
+		SELECT 
+		  ra.year
+		, ra.round
+		, ra.name
+		, d.driverRef
+		, d.forename
+		, d.surname
+		, d.nationality
+		, re.grid
+		, re.position
+		, re.points
+		, re.laps
+		, s.status
+	
+	FROM
+		results re
+		JOIN drivers d on d.driverId = re.driverId
+		JOIN races ra on ra.raceId = re.raceId
+		JOIN status s on s.statusId = re.statusId
+	
+	WHERE 
+		re.constructorId = ?
+        ''',
+	[constructor_id]
+    )
+
+    constructor_detailed['results'] = constructor_results
     
-    save_to_json(constructors, 'constructors/' + str(constructor['constructorRef'] + '.json') )
+    save_to_json(constructor_detailed, 'constructors/' + str(constructor['constructorRef'] + '.json') )
 
 save_to_json(constructors, 'constructors.json')
