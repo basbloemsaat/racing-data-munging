@@ -4,18 +4,9 @@
 <head>
     <title>io</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" href="inc/rdm.css">
     <style>
-    div#all_seasons_edges {
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        top: 0px;
-        bottom: 0px;
-        z-index: 0;
-        display: hidden;
-    }
-
-    svg#all_seasons {
+     svg#all_seasons {
         border: 0px solid red;
         z-index: 1;
     }
@@ -42,7 +33,7 @@
     <h1>F1 seasons</h1>
     <h2>Number of races per season</h2>
     <svg id="all_seasons"></svg>
-    <div id="all_seasons_edges"></div>
+    <div id="edges"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script>
     var chart = {
@@ -64,7 +55,7 @@
 
     (function() {
         this.initCharts = function() {
-            var edges = d3.select('div#all_seasons_edges').node();
+            var edges = d3.select('div#edges').node();
             width = +edges.clientWidth - chart.margin.left - chart.margin.right - window_margin
             height = +edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin;
 
@@ -96,7 +87,6 @@
                 .attr("class", "axis axis--y")
                 .call(chart.y_races_axis.tickSize(-width))
 
-            d3.select('div#all_seasons_edges').style('position', 'relative')
             rdm.loadData();
         }
 

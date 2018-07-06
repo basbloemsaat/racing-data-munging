@@ -2,81 +2,131 @@
 <html>
 
 <head>
-    <title>io</title>
+    <title>f1 drivers list</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
-    <style>
-    div#all_seasons_edges {
-        position: absolute;
-        left: 0px;
-        right: 0px;
-        top: 0px;
-        bottom: 0px;
-        z-index: 0;
-        display: hidden;
-    }
-
-    svg#all_seasons {
-        border: 0px solid red;
-        z-index: 1;
-    }
-
-    rect.bar {
-        fill: CornflowerBlue;
-    }
-
-    rect.bar:hover {
-        fill: orange;
-    }
-    </style>
+    <link rel="stylesheet" href="inc/rdm.css">
 </head>
 
 <body>
-    <h1 id="pagetitle">F1 season</h1>
-    <svg id="all_seasons"></svg>
-    <div id="all_seasons_edges"></div>
+    <h1 id="pagetitle">F1 drivers list</h1>
+    <div id="edges"></div>
+    <table id="list_drivers" class="table">
+        <thead>
+            <tr>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="inc/rdm.js"></script>
     <script>
-    var url_string = window.location.href;
-    var url = new URL(url_string);
-    var year = url.searchParams.get("year");
-
-    d3.select('h1#pagetitle').text('F1 season ' + year);
-
-    console.log(year);
-    var chart = {
-        'data': [],
-        'x': null,
-        'x_axis': null,
-        'y': null,
-        'y_axis': null,
-        'margin': { top: 20, right: 20, bottom: 100, left: 40 },
-    };
-
-
-
-    window_margin = 30;
-
-    rdm = {};
-
-    var width, height;
-
     (function() {
+
+        this.columns = [{
+                title: "Driver",
+                f_val: function(d) { return d.surname + ', ' + d.forename ; },
+                f_href: function(d) {return d.url; },
+                sort_default: 'asc',
+            },
+            {
+                title: "Nationality",
+                f_val: function(d) { return d.nationality; },
+                sort_default: 'asc',
+            },
+            {
+                title: "Races",
+                f_val: function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('races')) : { "races": 0 };
+                    return res.races;
+                },
+                sort_default: 'desc',
+            },
+            {
+                title: "Wins",
+                f_val: function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('wins')) : { "wins": 0 };
+                    return res.wins;
+                },
+                sort_default: 'desc',
+            },
+            {
+                title: "Podiums",
+                f_val: function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('podiums')) : { "podiums": 0 };
+                    return res.podiums;
+                },
+                sort_default: 'desc',
+            },
+            {
+                title: "First Entry",
+                f_val: function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_min('year')) : { "year": 0 };
+                    return res.year;
+                },
+                sort_default: 'asc',
+            },
+            {
+                title: "Last Entry",
+                f_val: function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_max('year')) : { "year": 0 };
+                    return res.year;
+                },
+                sort_default: 'desc',
+            },
+        ]
+
+
         this.initCharts = function() {
+            d3.select('table#list_drivers thead').selectAll('th')
+                .data(rdm.columns)
+                .enter()
+                .append('th')
+                .on('click', function(d) {
+                    var sort_order = d.sort_default;
+                    if (
+                        rdm.current_sort.title ==  d.title
+                        && rdm.current_sort.order == sort_order
+                    ) {
+                        sort_order = (sort_order == 'asc' ? 'desc' : 'asc');
+                    }
+
+                    rdm.update_drivers_overview(rdm.sortby(rdm.loaded_data['drivers_list'], d.f_val, sort_order));
+                    rdm.current_sort.title = d.title;
+                    rdm.current_sort.order = sort_order;
+                })
+                .text(function(d) { return d.title });
+
             rdm.loadData();
         }
 
         this.loadData = function() {
-            var uri = "/racing-data-munging/data/ergast/seasons/" + year + "/overview.json"
+            var uri = "/racing-data-munging/data/ergast/drivers.json"
             d3.json(uri)
                 .then(
                     function(data) {
-                        rdm.updateSeasonOverviewChart(data)
+                        rdm.loaded_data['drivers_list'] = data;
+                        rdm.update_drivers_overview(rdm.loaded_data['drivers_list'])
                     }
                 );
         }
+      
+        this.update_drivers_overview = function(data) {
+            var tbody = d3.select('table#list_drivers tbody');
+            tbody.selectAll("tr").remove();
 
-        this.updateSeasonOverviewChart = function(data) {
+            var rows = tbody.selectAll('tr').data(data);
 
+            addrows = rows.enter().append('tr');
+
+            for (var i = 0; i < rdm.columns.length; i++) {
+                tds = addrows.append("td").attr("class", "name")
+                if (typeof rdm.columns[i]['f_href'] == 'function') {
+                    tds = tds.append('a')
+                        .attr('href', rdm.columns[i]['f_href'])
+                }
+                tds.text(rdm.columns[i].f_val);
+            }
         }
     }).apply(rdm);
 
