@@ -36,13 +36,6 @@
     <table id="list_constructors" class="table">
         <thead>
             <tr>
-                <th>Constructor</th>
-                <th>Nationality</th>
-                <th>Races</th>
-                <th>Wins</th>
-                <th>Podiums</th>
-                <th>First Entry</th>
-                <th>Last Entry</th>
             </tr>
         </thead>
         <tbody>
@@ -52,21 +45,77 @@
     <script src="js/rdm.js"></script>
     <script>
     (function() {
+
+        var sum = function(variable) {
+            return function(a, b) {
+                var x = {};
+                x[variable] = a[variable] + b[variable];
+                return x
+            };
+        }
+
+        this.columns = [{
+                "title": "Constructor",
+                "df": function(d) { return d.name; },
+            },
+            {
+                "title": "Nationality",
+                "df": function(d) { return d.nationality; },
+            },
+            {
+                "title": "Races",
+                "df": function(d) { 
+                    var res = d.years_active.length ? d.years_active.reduce(sum('races')) : {"races": 0};
+                    return res.races;
+                },
+            },
+            {
+                "title": "Wins",
+                "df": function(d) { return d.name; },
+            },
+            {
+                "title": "Podiums",
+                "df": function(d) { return d.name; },
+            },
+            {
+                "title": "First Entry",
+                "df": function(d) { return d.name; },
+            },
+            {
+                "title": "Last Entry",
+                "df": function(d) { return d.name; },
+            },
+        ]
+
         this.reduce_functions = {
             // "races": function(a, b) { return { "races": a.races + b.races } },
             // "wins": function(a, b) { return { "wins": a.wins + b.wins } },
         }
 
+        this.loaded_data = {};
+
         var variables = ['races', 'wins', 'podiums'];
-        for(var i = 0; i < variables.length; i++) {
+        for (var i = 0; i < variables.length; i++) {
             var variable = variables[i];
-            var sum = function (variable) {
-                return function(a, b) {  var x = {}; x[variable] = a[variable] + b[variable]; return x }; 
+            var sum = function(variable) {
+                return function(a, b) {
+                    var x = {};
+                    x[variable] = a[variable] + b[variable];
+                    return x
+                };
             }
             this.reduce_functions[variable] = sum(variable);
         }
 
         this.initCharts = function() {
+            d3.select('table#list_constructors thead').selectAll('th')
+                .data(rdm.columns)
+                .enter()
+                .append('th')
+                .text(function(d) { return d.title })
+
+            ;
+
             rdm.loadData();
         }
 
@@ -75,24 +124,30 @@
             d3.json(uri)
                 .then(
                     function(data) {
-                        rdm.update_constructors_overview(data)
+                        rdm.loaded_data['constructors_list'] = data;
+                        rdm.update_constructors_overview(rdm.loaded_data['constructors_list'])
                     }
                 );
+        }
+
+        this.sortby = function(sort_term) {
+
+            update_constructors_overview();
         }
 
         this.update_constructors_overview = function(data) {
             console.log(data)
             var tbody = d3.select('table#list_constructors tbody');
+            tbody.selectAll("tr").remove();
+
             var rows = tbody.selectAll('tr').data(data);
 
             addrows = rows.enter().append('tr');
 
-            addrows.append("td").attr("class", "name").text(
-                function(d) {
-                    // console.log(d.name);
-                    return d.name;
-                }
-            );
+            for (var i = 0; i < rdm.columns.length; i++) {
+                addrows.append("td").attr("class", "name").text(rdm.columns[i].df);
+            }
+
 
             addrows.append("td").attr("class", "nat").text(function(d) { return d.nationality; });
 
