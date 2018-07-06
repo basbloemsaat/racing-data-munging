@@ -19,7 +19,7 @@ db.isolation_level = None
 def save_to_json(data, json_file):
     path = os.path.join(os.path.dirname(__file__),
                         "../data/ergast/", json_file)
-    print('saving ' + path)
+#    print('saving ' + path)
     with open(path, 'w') as outfile:
         json.dump(data, outfile)
 
@@ -141,6 +141,10 @@ for driver in drivers:
 
     driver['years_active'] = driver_years_active
 
+    save_to_json(driver, 'drivers/' + str(driver['driverRef'] + '.json') )
+
+    
+
 save_to_json(drivers, 'drivers.json')
 
 constructors = exec_query(
@@ -172,5 +176,7 @@ for constructor in constructors:
     )
 
     constructor['years_active'] = constructor_years_active
+    
+    save_to_json(constructors, 'constructors/' + str(constructor['constructorRef'] + '.json') )
 
 save_to_json(constructors, 'constructors.json')
