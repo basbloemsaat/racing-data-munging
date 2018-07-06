@@ -9,7 +9,7 @@ from pprint import pprint
 from dumper import dump
 
 ergastsqlite = os.path.join(os.path.dirname(
-    __file__), "../../racing-data-munging-prv/ergast/ergast_sqlite3.db")
+    __file__), "../../racing-data-munging-prv/ergast/ergast.sqlite3db")
 uri = 'file:' + ergastsqlite + '?mode=ro'
 
 db = sqlite3.connect(uri, uri=True)
@@ -108,7 +108,7 @@ for season in seasons:
         , args = [season_year]
     )
 
-    save_to_json(season_overview, 'seasons/' + str(season_year) + '/overview.json')
+    save_to_json(season_overview, 'seasons/' + str(season_year) + '_overview.json')
 
 drivers = exec_query(
     query='''
