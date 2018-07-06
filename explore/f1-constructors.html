@@ -46,14 +46,6 @@
     <script>
     (function() {
 
-        var sum = function(variable) {
-            return function(a, b) {
-                var x = {};
-                x[variable] = a[variable] + b[variable];
-                return x
-            };
-        }
-
         this.columns = [{
                 "title": "Constructor",
                 "df": function(d) { return d.name; },
@@ -64,48 +56,42 @@
             },
             {
                 "title": "Races",
-                "df": function(d) { 
-                    var res = d.years_active.length ? d.years_active.reduce(sum('races')) : {"races": 0};
+                "df": function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('races')) : { "races": 0 };
                     return res.races;
                 },
             },
             {
                 "title": "Wins",
-                "df": function(d) { return d.name; },
+                "df": function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('wins')) : { "wins": 0 };
+                    return res.wins;
+                },
             },
             {
                 "title": "Podiums",
-                "df": function(d) { return d.name; },
+                "df": function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_sum('podiums')) : { "podiums": 0 };
+                    return res.podiums;
+                },
             },
             {
                 "title": "First Entry",
-                "df": function(d) { return d.name; },
+                "df": function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_min('year')) : { "year": 0 };
+                    return res.year;
+                },
             },
             {
                 "title": "Last Entry",
-                "df": function(d) { return d.name; },
+                "df": function(d) {
+                    var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_max('year')) : { "year": 0 };
+                    return res.year;
+                },
             },
         ]
 
-        this.reduce_functions = {
-            // "races": function(a, b) { return { "races": a.races + b.races } },
-            // "wins": function(a, b) { return { "wins": a.wins + b.wins } },
-        }
-
         this.loaded_data = {};
-
-        var variables = ['races', 'wins', 'podiums'];
-        for (var i = 0; i < variables.length; i++) {
-            var variable = variables[i];
-            var sum = function(variable) {
-                return function(a, b) {
-                    var x = {};
-                    x[variable] = a[variable] + b[variable];
-                    return x
-                };
-            }
-            this.reduce_functions[variable] = sum(variable);
-        }
 
         this.initCharts = function() {
             d3.select('table#list_constructors thead').selectAll('th')
@@ -147,42 +133,6 @@
             for (var i = 0; i < rdm.columns.length; i++) {
                 addrows.append("td").attr("class", "name").text(rdm.columns[i].df);
             }
-
-
-            addrows.append("td").attr("class", "nat").text(function(d) { return d.nationality; });
-
-            addrows.append("td").attr("class", "races").text(function(d) {
-                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.races) : 0;
-                return res.races;
-            });
-
-            addrows.append("td").attr("class", "wins").text(function(d) {
-                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.wins) : 0;
-                return res.wins;
-            });
-
-            addrows.append("td").attr("class", "podiums").text(function(d) {
-                var res = d.years_active.length ? d.years_active.reduce(rdm.reduce_functions.podiums) : 0;
-                return res.podiums;
-            });
-
-            var red_firstyear = function(a, b) {
-                return { "year": (a.year < b.year ? a.year : b.year) }
-            }
-            addrows.append("td").attr("class", "firstyear").text(function(d) {
-                var res = d.years_active.length ? d.years_active.reduce(red_firstyear) : 0;
-                return res.year;
-            });
-
-            var red_lastyear = function(a, b) {
-                return { "year": (a.year > b.year ? a.year : b.year) }
-            }
-            addrows.append("td").attr("class", "lastyear").text(function(d) {
-                var res = d.years_active.length ? d.years_active.reduce(red_lastyear) : 0;
-                return res.year;
-            });
-
-
         }
     }).apply(rdm);
 
