@@ -3,9 +3,9 @@ var rdm = {};
 (function() {
     this.reduce_sum = function(variable) {
         return function(a, b) {
-
-            xx = { variable: a[variable] + b[variable] };
-            console.log(xx);
+            var i = 0;
+            // xx = { i++: a[variable] + b[variable] };  \\`
+            // console.log(xx);
 
             var x = {};
             x[variable] = a[variable] + b[variable];
