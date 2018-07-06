@@ -42,6 +42,8 @@ var rdm = {};
     }
 
     this.loaded_data = {};
-
+    
+    var url_string = window.location.href;
+    this.url = new URL(url_string);
 
 }).apply(rdm);
