@@ -86,7 +86,7 @@ for season in seasons:
             GROUP BY driverRef
             ORDER BY SUM(re.points) DESC
         '''
-        , args = [season_year]
+        , args=[season_year]
     )
 
     season_overview['constructor_standings'] = exec_query(
@@ -106,10 +106,34 @@ for season in seasons:
             GROUP BY constructorRef
             ORDER BY SUM(re.points) DESC
         '''
-        , args = [season_year]
+        , args=[season_year]
+    )
+    save_to_json(season_overview, 'seasons/' +
+                 str(season_year) + '_overview.json')
+
+    exec_query(
+        query='''
+            SELECT
+                  ra.year
+                , ra.round
+                , ra.name
+                , d.driverRef
+                , d.forename
+                , d.surname
+                , q.position
+                , q.q1
+                , q.q2
+                , q.q3
+            FROM 
+                qualifying q
+                JOIN races ra ON ra.raceId = q.raceId
+                JOIN drivers d on d.driverId = q.driverId
+            WHERE ra.year = ?
+            ORDER BY ra.round ASC, q.position ASC
+        '''
+        , args=[season_year], json_file='seasons/' + str(season_year) + '_quali_results.json'
     )
 
-    save_to_json(season_overview, 'seasons/' + str(season_year) + '_overview.json')
 
 drivers = exec_query(
     query='''
@@ -142,9 +166,8 @@ for driver in drivers:
 
     driver['years_active'] = driver_years_active
 
-    save_to_json(driver, 'drivers/' + str(driver['driverRef'] + '.json') )
+    save_to_json(driver, 'drivers/' + str(driver['driverRef'] + '.json'))
 
-    
 
 save_to_json(drivers, 'drivers.json')
 
@@ -205,11 +228,12 @@ for constructor in constructors:
 	WHERE 
 		re.constructorId = ?
         ''',
-	[constructor_id]
+        [constructor_id]
     )
 
     constructor_detailed['results'] = constructor_results
-    
-    save_to_json(constructor_detailed, 'constructors/' + str(constructor['constructorRef'] + '.json') )
+
+    save_to_json(constructor_detailed, 'constructors/' +
+                 str(constructor['constructorRef'] + '.json'))
 
 save_to_json(constructors, 'constructors.json')
