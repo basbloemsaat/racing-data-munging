@@ -25,10 +25,15 @@ var rdm = {};
         };
     }
 
-    this.sortby = function(data, sort_term_function, sort_direction) {
+    this.sortby = function(data, sort_term_function, sort_direction, numeric) {
+        console.log(numeric)
         data.sort(function(a, b) {
             key_a = sort_term_function(a);
             key_b = sort_term_function(b);
+            if(numeric) {
+                key_a = parseFloat(key_a)             
+                key_b = parseFloat(key_b)             
+            }
             if (key_a > key_b) return (sort_direction == 'asc' ? 1 : -1);
             if (key_a < key_b) return (sort_direction == 'asc' ? -1 : 1);
             return 0;

@@ -7,3 +7,14 @@ div#edges {
     z-index: 0;
     visibility: hidden;
 }
+
+.sortable:hover {
+    cursor: pointer;
+    color: DarkOrange;
+}
+
+th.numeric, td.numeric {
+    text-align: right;
+}
+
+ 
