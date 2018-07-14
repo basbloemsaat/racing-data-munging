@@ -113,21 +113,43 @@ for season in seasons:
 
     exec_query(
         query='''
-            SELECT
-                  ra.year
+            SELECT 
+                d.driverRef
+                , d.forename || ' ' || d.surname AS driverName
+                , co.constructorRef
+                , co.name AS constructorName
+                , ci.country AS raceCountry
                 , ra.round
-                , ra.name
-                , d.driverRef
-                , d.forename
-                , d.surname
+                , ra.date
+                , MIN(
+
+                CASE
+                    WHEN q.q1='' THEN 'no time'
+                    WHEN q.q1 IS NULL THEN 'no time'
+                    ELSE q.q1
+                END
+                ,
+                CASE
+                    WHEN q.q2='' THEN 'x'
+                    WHEN q.q2 IS NULL THEN 'x'
+                    ELSE q.q2
+                END
+                , 
+                CASE
+                    WHEN q.q3='' THEN 'x'
+                    WHEN q.q3 IS NULL THEN 'x'
+                    ELSE q.q3
+                END
+                
+                ) AS LapTime
                 , q.position
-                , q.q1
-                , q.q2
-                , q.q3
-            FROM 
+            FROM
                 qualifying q
                 JOIN races ra ON ra.raceId = q.raceId
-                JOIN drivers d on d.driverId = q.driverId
+                JOIN drivers d ON d.driverId = q.driverId
+                JOIN constructors co ON co.constructorId = q.constructorId
+                JOIN circuits ci ON ci.circuitId = ra.circuitId 
+                
             WHERE ra.year = ?
             ORDER BY ra.round ASC, q.position ASC
         '''
