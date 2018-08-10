@@ -29,7 +29,7 @@
 
     .line {
         fill: none;
-        /*stroke-width: 2px;*/
+        /*stroke-linejoin: round;*/
     }
     </style>
 </head>
@@ -40,6 +40,8 @@
     <svg id="lap_chart"></svg>
     <div id="edges"></div>
     <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="inc/rdm.js"></script>
+    <script src="inc/rdm_colors.js"></script>
     <script>
     var chart = {
         'data': [],
@@ -53,8 +55,6 @@
 
 
     window_margin = 30;
-
-    rdm = {};
 
     var width, height;
 
@@ -88,7 +88,6 @@
             g.append("g")
                 .attr("class", "axis axis--x")
                 .attr("transform", "translate(0," + height + ")")
-                .call(chart.x_axis);
 
             g.append("g")
                 .attr("class", "axis axis--y")
@@ -110,19 +109,30 @@
         this.update_lap_chart = function(data) {
             var data_by_driver =
                 d3.nest()
-                .key(function(d) { return d.forename + ' ' + d.surname })
+                .key(function(d) { return d.driverRef })
                 .entries(data)
 
             var nr_rounds = 0;
             for (var i = 0; i < data_by_driver.length; i++) {
-                data_by_driver[i].constructor = data_by_driver[i].values[0].name;
-                data_by_driver[i].grid = data_by_driver[i].values[0].grid;
-                data_by_driver[i].finish = data_by_driver[i].values[0].position;
-                data_by_driver[i].status = data_by_driver[i].values[0].status;
-                data_by_driver[i].last_lap =
-                    data_by_driver[i].values[data_by_driver[i].values.length - 1].laps_run;
+                dd = data_by_driver[i];
+                dd0 = dd.values[0]
+                dd.name = dd0.forename + ' ' + dd0.surname;
+                dd.constructor = dd0.constructor;
+                dd.constructorRef = dd0.constructorRef;
+                dd.grid = dd0.grid;
+                dd.finish = dd0.position;
+                dd.status = dd0.status;
+                dd.last_lap =
+                    dd.values[dd.values.length - 1].laps_run;
 
-                nr_rounds = Math.max(nr_rounds, data_by_driver[i].last_lap);
+                nr_rounds = Math.max(nr_rounds, dd.last_lap);
+
+                dd.values.unshift({
+                    lap_nr: 0,
+                    lap_position: dd0.grid,
+                    grid: dd0.grid,
+                })
+
 
             }
 
@@ -130,13 +140,6 @@
             console.log(nr_rounds);
             chart.x.domain(data_by_driver.map(function(d) { return d.grid; }));
             var bw = chart.x.bandwidth();
-            d3.select('g.axis--x').call(chart.x_axis)
-                .selectAll("text")
-                .attr("y", 8)
-                .attr("x", -8)
-                .attr("dy", ".5em")
-                .attr("transform", "rotate(-45)")
-                .style("text-anchor", "end");
 
             chart.y_round.domain([0, nr_rounds]);
             d3.select('g.axis--y').call(chart.y_round_axis.ticks(10))
@@ -153,7 +156,8 @@
 
 
             var line = d3.line()
-                .curve(d3.curveLinear)
+                // .curve(d3.curveLinear)
+                .curve(d3.curveMonotoneY)
                 .x(function(d) { return chart.x(d.lap_position) + (bw / 2) })
                 .y(function(d) { return chart.y_round(d.lap_nr) })
 
@@ -164,9 +168,10 @@
                 .attr('stroke', function(d) {
                     // console.log(d.grid);
                     // console.log( chart.colors(d.grid));
-                    return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
+                    return rdm.team_color(d.constructorRef, 2018);
+                    // return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
                 })
-                .attr('stroke-width', 4)
+                .attr('stroke-width', bw / 12)
 
             dots =
                 new_drivers.selectAll('circle.lap')
@@ -174,14 +179,22 @@
 
             dots.enter().append('circle')
                 .attr('class', 'lap')
-                .attr('r', 4)
+                .attr('r', function(d) {
+                    if (d.stop_ms) {
+                        return bw/8;
+                        console.log(d);
+                    }
+                    return 0;
+                })
                 .attr("cx", function(d) { return chart.x(d.lap_position) + (bw / 2) })
                 .attr("cy", function(d) { return chart.y_round(d.lap_nr) })
                 .attr('fill', function(d) {
                     // console.log(d.grid);
                     // console.log( chart.colors(d.grid));
-                    return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
+                    // return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
+                    return rdm.team_color(d.constructorRef, 2018);
                 })
+                .text('x')
 
 
         }
