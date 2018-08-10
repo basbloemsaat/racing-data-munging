@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>io</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <link rel="stylesheet" href="inc/rdm.css">
+    <style>
+    svg#all_seasons {
+        border: 0px solid red;
+        z-index: 1;
+    }
+
+    svg#all_seasons g.tick text {
+        font-size: 1.2em;
+    }
+
+    svg#all_seasons g.axis--y g.tick line {
+        opacity: 0.1;
+    }
+
+    rect.bar {
+        fill: CornflowerBlue;
+    }
+
+    rect.bar:hover {
+        fill: orange;
+    }
+
+    .line {
+        fill: none;
+        /*stroke-width: 2px;*/
+    }
+    </style>
+</head>
+
+<body>
+    <h1>F1 seasons</h1>
+    <h2>Lap Chart</h2>
+    <svg id="lap_chart"></svg>
+    <div id="edges"></div>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>
+    var chart = {
+        'data': [],
+        'x': null,
+        'x_axis': null,
+        'y': null,
+        'y_axis': null,
+        'margin': { top: 20, right: 20, bottom: 100, left: 40 },
+    };
+
+
+
+    window_margin = 30;
+
+    rdm = {};
+
+    var width, height;
+
+    (function() {
+        this.init_charts = function() {
+            var edges = d3.select('div#edges').node();
+            width = +edges.clientWidth - chart.margin.left - chart.margin.right - window_margin
+            height = +edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin;
+
+            var svg = chart.svg = d3.select("svg#lap_chart");
+            svg
+                .attr("width", +edges.clientWidth - window_margin)
+                .attr("height", +edges.clientHeight - window_margin);
+
+            chart.x = d3.scaleBand().rangeRound([0, width]);
+            chart.x_axis = d3.axisBottom(chart.x);
+            chart.y_round = d3.scaleLinear().rangeRound([0, height]);
+            chart.y_round_axis = d3.axisLeft(chart.y_round).ticks(10);
+
+            chart.colors = d3.scaleOrdinal(d3.schemeSpectral[30]);
+
+            var g = svg.append("g")
+                .attr("transform",
+                    "translate(" + chart.margin.left + "," + chart.margin.top + ")"
+                );
+
+            g.append('g')
+                .attr("class", "drivers")
+            // .attr("transform", "translate(0," + height + ") scale(1,-1)");
+
+            g.append("g")
+                .attr("class", "axis axis--x")
+                .attr("transform", "translate(0," + height + ")")
+                .call(chart.x_axis);
+
+            g.append("g")
+                .attr("class", "axis axis--y")
+                .call(chart.y_round_axis)
+            // .call(chart.y_round_axis.tickSize(-width))
+
+            rdm.load_data();
+        }
+
+        this.load_data = function() {
+            d3.json("/racing-data-munging/data/ergast/races/2018_9_laps.json")
+                .then(
+                    function(data) {
+                        rdm.update_lap_chart(data)
+                    }
+                );
+        }
+
+        this.update_lap_chart = function(data) {
+            var data_by_driver =
+                d3.nest()
+                .key(function(d) { return d.forename + ' ' + d.surname })
+                .entries(data)
+
+            var nr_rounds = 0;
+            for (var i = 0; i < data_by_driver.length; i++) {
+                data_by_driver[i].constructor = data_by_driver[i].values[0].name;
+                data_by_driver[i].grid = data_by_driver[i].values[0].grid;
+                data_by_driver[i].finish = data_by_driver[i].values[0].position;
+                data_by_driver[i].status = data_by_driver[i].values[0].status;
+                data_by_driver[i].last_lap =
+                    data_by_driver[i].values[data_by_driver[i].values.length - 1].laps_run;
+
+                nr_rounds = Math.max(nr_rounds, data_by_driver[i].last_lap);
+
+            }
+
+            console.log(data_by_driver);
+            console.log(nr_rounds);
+            chart.x.domain(data_by_driver.map(function(d) { return d.grid; }));
+            var bw = chart.x.bandwidth();
+            d3.select('g.axis--x').call(chart.x_axis)
+                .selectAll("text")
+                .attr("y", 8)
+                .attr("x", -8)
+                .attr("dy", ".5em")
+                .attr("transform", "rotate(-45)")
+                .style("text-anchor", "end");
+
+            chart.y_round.domain([0, nr_rounds]);
+            d3.select('g.axis--y').call(chart.y_round_axis.ticks(10))
+
+            var g = d3.select('g.drivers')
+
+            var drivers = g
+                .selectAll('g.driver').data(data_by_driver)
+
+            var new_drivers = drivers.enter()
+                .append('g')
+                .attr('class', 'driver')
+                .attr('id', function(d) { return 'grid' + d.grid })
+
+
+            var line = d3.line()
+                .curve(d3.curveLinear)
+                .x(function(d) { return chart.x(d.lap_position) + (bw / 2) })
+                .y(function(d) { return chart.y_round(d.lap_nr) })
+
+            new_drivers.append('path')
+                // .data(function(d, i) { return d.values })
+                .attr("class", "line")
+                .attr("d", function(d) { return line(d.values) })
+                .attr('stroke', function(d) {
+                    // console.log(d.grid);
+                    // console.log( chart.colors(d.grid));
+                    return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
+                })
+                .attr('stroke-width', 4)
+
+            dots =
+                new_drivers.selectAll('circle.lap')
+                .data(function(d, i) { return d.values })
+
+            dots.enter().append('circle')
+                .attr('class', 'lap')
+                .attr('r', 4)
+                .attr("cx", function(d) { return chart.x(d.lap_position) + (bw / 2) })
+                .attr("cy", function(d) { return chart.y_round(d.lap_nr) })
+                .attr('fill', function(d) {
+                    // console.log(d.grid);
+                    // console.log( chart.colors(d.grid));
+                    return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
+                })
+
+
+        }
+    }).apply(rdm);
+
+    rdm.init_charts();
+    </script>
+</body>
+
+</html>
