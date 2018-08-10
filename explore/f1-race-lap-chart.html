@@ -52,6 +52,12 @@
         'margin': { top: 20, right: 20, bottom: 100, left: 40 },
     };
 
+    var url_string = window.location.href;
+    var url = new URL(url_string);
+    var year = url.searchParams.get("year");
+    var round = url.searchParams.get("round");
+
+    console.log(year, round);
 
 
     window_margin = 30;
@@ -62,12 +68,13 @@
         this.init_charts = function() {
             var edges = d3.select('div#edges').node();
             width = +edges.clientWidth - chart.margin.left - chart.margin.right - window_margin
-            height = +edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin;
+            height = 1.3 * width;
+            // height = +edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin;
 
             var svg = chart.svg = d3.select("svg#lap_chart");
             svg
-                .attr("width", +edges.clientWidth - window_margin)
-                .attr("height", +edges.clientHeight - window_margin);
+                .attr("width", width + chart.margin.left + chart.margin.right)
+                .attr("height", height + chart.margin.top + chart.margin.bottom);
 
             chart.x = d3.scaleBand().rangeRound([0, width]);
             chart.x_axis = d3.axisBottom(chart.x);
@@ -98,7 +105,7 @@
         }
 
         this.load_data = function() {
-            d3.json("/racing-data-munging/data/ergast/races/2018_9_laps.json")
+            d3.json("/racing-data-munging/data/ergast/races/" + year + "_" + round + "_laps.json")
                 .then(
                     function(data) {
                         rdm.update_lap_chart(data)
@@ -157,21 +164,31 @@
 
             var line = d3.line()
                 // .curve(d3.curveLinear)
-                .curve(d3.curveMonotoneY)
-                .x(function(d) { return chart.x(d.lap_position) + (bw / 2) })
-                .y(function(d) { return chart.y_round(d.lap_nr) })
+                // .curve(d3.curveMonotoneY)
+                .x(function(d) {
+                    console.log(chart.x(d.lap_position) + (bw / 2))
+                    return chart.x(d.lap_position) + (bw / 2)
+                })
+                .y(function(d) {
+                    console.log(chart.y_round(d.lap_nr))
+                    return chart.y_round(d.lap_nr)
+                })
 
             new_drivers.append('path')
                 // .data(function(d, i) { return d.values })
                 .attr("class", "line")
-                .attr("d", function(d) { return line(d.values) })
+                .attr("d", function(d,i) {
+                    console.log(d,i)
+                    console.log(line(d.values))
+                    return line(d.values)
+                })
                 .attr('stroke', function(d) {
                     // console.log(d.grid);
                     // console.log( chart.colors(d.grid));
                     return rdm.team_color(d.constructorRef, 2018);
                     // return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
                 })
-                .attr('stroke-width', bw / 12)
+                .attr('stroke-width', Math.max(4, bw / 12))
 
             dots =
                 new_drivers.selectAll('circle.lap')
@@ -181,8 +198,7 @@
                 .attr('class', 'lap')
                 .attr('r', function(d) {
                     if (d.stop_ms) {
-                        return bw/8;
-                        console.log(d);
+                        return bw / 8;
                     }
                     return 0;
                 })
