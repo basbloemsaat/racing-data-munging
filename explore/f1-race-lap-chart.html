@@ -29,7 +29,12 @@
 
     .line {
         fill: none;
-        /*stroke-linejoin: round;*/
+        stroke-linejoin: round;
+    }
+
+    .striped {
+        /*stroke: #000000;*/
+        mask: url(#mask-stripe);
     }
     </style>
 </head>
@@ -57,9 +62,6 @@
     var year = url.searchParams.get("year");
     var round = url.searchParams.get("round");
 
-    console.log(year, round);
-
-
     window_margin = 30;
 
     var width, height;
@@ -68,8 +70,9 @@
         this.init_charts = function() {
             var edges = d3.select('div#edges').node();
             width = +edges.clientWidth - chart.margin.left - chart.margin.right - window_margin
-            height = 1.3 * width;
-            // height = +edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin;
+            height =
+                Math.max(+edges.clientHeight - chart.margin.top - chart.margin.bottom - window_margin, height = 1.3 * width)
+
 
             var svg = chart.svg = d3.select("svg#lap_chart");
             svg
@@ -78,8 +81,8 @@
 
             chart.x = d3.scaleBand().rangeRound([0, width]);
             chart.x_axis = d3.axisBottom(chart.x);
-            chart.y_round = d3.scaleLinear().rangeRound([0, height]);
-            chart.y_round_axis = d3.axisLeft(chart.y_round).ticks(10);
+            chart.y_lap = d3.scaleLinear().rangeRound([0, height]);
+            chart.y_lap_axis = d3.axisLeft(chart.y_lap).ticks(10);
 
             chart.colors = d3.scaleOrdinal(d3.schemeSpectral[30]);
 
@@ -98,8 +101,10 @@
 
             g.append("g")
                 .attr("class", "axis axis--y")
-                .call(chart.y_round_axis)
-            // .call(chart.y_round_axis.tickSize(-width))
+                .call(chart.y_lap_axis)
+            // .call(chart.y_lap_axis.tickSize(-width))
+
+            rdm.svg_add_stripes(svg);
 
             rdm.load_data();
         }
@@ -120,6 +125,7 @@
                 .entries(data)
 
             var nr_rounds = 0;
+            var positions = 0;
             for (var i = 0; i < data_by_driver.length; i++) {
                 dd = data_by_driver[i];
                 dd0 = dd.values[0]
@@ -133,23 +139,27 @@
                     dd.values[dd.values.length - 1].laps_run;
 
                 nr_rounds = Math.max(nr_rounds, dd.last_lap);
+                positions = Math.max(positions, dd.position);
 
-                dd.values.unshift({
-                    lap_nr: 0,
-                    lap_position: dd0.grid,
-                    grid: dd0.grid,
-                })
+                if (dd0.lap_nr) {
+                    dd.values.unshift({
+                        lap_nr: 0,
+                        lap_position: dd0.grid,
+                        grid: dd0.grid,
+                    })
+                } else {
+                    dd0.lap_nr = 0
+                    dd0.lap_position = dd0.grid
+                }
 
 
             }
 
-            console.log(data_by_driver);
-            console.log(nr_rounds);
-            chart.x.domain(data_by_driver.map(function(d) { return d.grid; }));
+            chart.x.domain(Array.apply([], { length: data_by_driver.length }).map(function(e, i) { return i + 1 }));
             var bw = chart.x.bandwidth();
 
-            chart.y_round.domain([0, nr_rounds]);
-            d3.select('g.axis--y').call(chart.y_round_axis.ticks(10))
+            chart.y_lap.domain([0, nr_rounds]);
+            d3.select('g.axis--y').call(chart.y_lap_axis.ticks(10))
 
             var g = d3.select('g.drivers')
 
@@ -163,30 +173,21 @@
 
 
             var line = d3.line()
-                // .curve(d3.curveLinear)
                 // .curve(d3.curveMonotoneY)
                 .x(function(d) {
-                    console.log(chart.x(d.lap_position) + (bw / 2))
                     return chart.x(d.lap_position) + (bw / 2)
                 })
                 .y(function(d) {
-                    console.log(chart.y_round(d.lap_nr))
-                    return chart.y_round(d.lap_nr)
+                    return chart.y_lap(d.lap_nr)
                 })
 
             new_drivers.append('path')
-                // .data(function(d, i) { return d.values })
                 .attr("class", "line")
-                .attr("d", function(d,i) {
-                    console.log(d,i)
-                    console.log(line(d.values))
+                .attr("d", function(d, i) {
                     return line(d.values)
                 })
                 .attr('stroke', function(d) {
-                    // console.log(d.grid);
-                    // console.log( chart.colors(d.grid));
                     return rdm.team_color(d.constructorRef, 2018);
-                    // return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
                 })
                 .attr('stroke-width', Math.max(4, bw / 12))
 
@@ -203,14 +204,46 @@
                     return 0;
                 })
                 .attr("cx", function(d) { return chart.x(d.lap_position) + (bw / 2) })
-                .attr("cy", function(d) { return chart.y_round(d.lap_nr) })
+                .attr("cy", function(d) { return chart.y_lap(d.lap_nr) })
                 .attr('fill', function(d) {
-                    // console.log(d.grid);
-                    // console.log( chart.colors(d.grid));
-                    // return d3.interpolateSinebow(d.grid / (1 + data_by_driver.length))
                     return rdm.team_color(d.constructorRef, 2018);
                 })
                 .text('x')
+
+            new_drivers.filter(function(d) { return d.finish })
+                .append('circle')
+                .attr('r', 8)
+                .attr("cx", function(d) {
+                    return chart.x(d.finish) + (bw / 2)
+                })
+                .attr('cy', height + 40)
+                .attr('fill', function(d) {
+                    return rdm.team_color(d.constructorRef, 2018);
+                })
+
+
+            new_drivers.filter(function(d) { return d.finish })
+            .append('line')
+            .style("stroke-dasharray", ("3, 3"))
+            .attr("x1", function(d) {
+                return chart.x(
+                    d.values[d.last_lap].lap_position
+                    ) + (bw / 2) 
+            })
+            .attr("y1", function(d) {
+                console.log(d);
+                return (chart.y_lap(d.last_lap))
+
+            })
+            .attr("x2", function(d) {
+                return chart.x(d.finish) + (bw / 2) 
+            })
+            .attr("y2", height + 40)
+            .attr('stroke', function(d) {
+                return rdm.team_color(d.constructorRef, 2018);
+            })
+            .attr('stroke-width', Math.max(4, bw / 12))
+
 
 
         }
