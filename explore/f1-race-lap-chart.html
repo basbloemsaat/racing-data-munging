@@ -127,6 +127,8 @@
 
             var nr_rounds = 0;
             var positions = 0;
+            var pitlane_starters = [];
+
             for (var i = 0; i < data_by_driver.length; i++) {
                 dd = data_by_driver[i];
                 dd0 = dd.values[0]
@@ -134,13 +136,18 @@
                 dd.constructor = dd0.constructor;
                 dd.constructorRef = dd0.constructorRef;
                 dd.grid = dd0.grid;
+
+                if (!dd.grid) {
+                    pitlane_starters.push(dd);
+                }
+
                 dd.finish = dd0.position;
                 dd.status = dd0.status;
                 dd.last_lap =
                     dd.values[dd.values.length - 1].laps_run;
 
-                nr_rounds = Math.max(nr_rounds, dd.last_lap);
-                positions = Math.max(positions, dd.position);
+                nr_rounds = Math.max(nr_rounds, dd.last_lap || 0);
+                positions = Math.max(positions, dd.grid || 0);
 
                 if (dd0.lap_nr) {
                     dd.values.unshift({
@@ -152,8 +159,11 @@
                     dd0.lap_nr = 0
                     dd0.lap_position = dd0.grid
                 }
+            }
 
-
+            for (var i = 0; i < pitlane_starters.length; i++) {
+                pitlane_starters[i].grid = ++positions;
+                pitlane_starters[i].values[0].lap_position = positions;
             }
 
             chart.x.domain(Array.apply([], { length: data_by_driver.length }).map(function(e, i) { return i + 1 }));
@@ -264,7 +274,7 @@
                 );
 
             chart.svg
-             .attr("height", height + chart.margin.top + chart.margin.bottom + (2*max_name_height));
+                .attr("height", height + chart.margin.top + chart.margin.bottom + (2 * max_name_height));
 
 
             //finish names
