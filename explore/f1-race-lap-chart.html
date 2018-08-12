@@ -87,6 +87,7 @@
             chart.colors = d3.scaleOrdinal(d3.schemeSpectral[30]);
 
             var g = svg.append("g")
+                .attr('id', 'chart')
                 .attr("transform",
                     "translate(" + chart.margin.left + "," + chart.margin.top + ")"
                 );
@@ -189,30 +190,88 @@
                 .attr('stroke', function(d) {
                     return rdm.team_color(d.constructorRef, 2018);
                 })
-                .attr('stroke-width', Math.max(4, bw / 12))
+                .attr('stroke-width', Math.max(4, bw / 10))
 
-            dots =
+            // pitstops
+            var dots =
                 new_drivers.selectAll('circle.lap')
-                .data(function(d, i) { return d.values })
+                .data(function(d) { return d.values })
 
-            dots.enter().append('circle')
+            var pitstops =
+                dots.enter()
+                .filter(function(d) { return d.stop_ms; })
+                .append('g')
+
+            pitstops
+                .append('circle')
                 .attr('class', 'lap')
-                .attr('r', function(d) {
-                    if (d.stop_ms) {
-                        return bw / 8;
-                    }
-                    return 0;
-                })
+                .attr('r', bw / 6)
                 .attr("cx", function(d) { return chart.x(d.lap_position) + (bw / 2) })
                 .attr("cy", function(d) { return chart.y_lap(d.lap_nr) })
                 .attr('fill', function(d) {
                     return rdm.team_color(d.constructorRef, 2018);
                 })
-                .text('x')
 
-            new_drivers.filter(function(d) { return d.finish })
-                .append('circle')
-                .attr('r', 8)
+            pitstops
+                .append('text')
+                .text(function(d) { return d.stop_nr })
+                .attr('x', function(d) { return chart.x(d.lap_position) + (bw / 2) })
+                .attr('y', function(d) { return chart.y_lap(d.lap_nr) })
+                .attr('text-anchor', 'middle')
+                .attr('dy', '0.3em')
+                .attr('fill', function(d) {
+                    return rdm.text_color(rdm.team_color(d.constructorRef, 2018));
+                })
+
+            // start names
+            drivers.merge(new_drivers)
+                .append('text')
+                .attr('class', 'header_name')
+                .attr('transform',
+                    function(d) {
+                        var x = chart.x(d.finish) + (bw / 2);
+                        var y = 0;
+                        return 'translate(' + x + ',' + y + ') rotate(-45)';
+                    }
+                )
+                .text(
+                    function(d) {
+                        return d.name
+                    }
+                );
+
+            max_name_width = 0;
+            max_name_height = 0;
+
+            d3.selectAll('text.header_name').each(function(d) {
+                var dim = this.getBoundingClientRect();
+                max_name_width = Math.max(max_name_width, dim.width);
+                max_name_height = Math.max(max_name_height, dim.height);
+            })
+
+            d3.selectAll('text.header_name')
+                .attr('transform',
+                    function(d) {
+                        var x = chart.x(d.grid) + (bw / 2);
+                        var y = -10;
+                        return 'translate(' + x + ',' + y + ') rotate(-45)';
+                    }
+                )
+
+            d3.select('g#chart')
+                .attr("transform",
+                    "translate(" + chart.margin.left + "," + (chart.margin.top + max_name_height) + ")"
+                );
+
+            chart.svg
+             .attr("height", height + chart.margin.top + chart.margin.bottom + (2*max_name_height));
+
+
+            //finish names
+            var finishers = new_drivers.filter(function(d) { return d.finish })
+
+            finishers.append('circle')
+                .attr('r', 4)
                 .attr("cx", function(d) {
                     return chart.x(d.finish) + (bw / 2)
                 })
@@ -221,29 +280,39 @@
                     return rdm.team_color(d.constructorRef, 2018);
                 })
 
+            finishers.append('line')
+                .style("stroke-dasharray", ("3, 3"))
+                .attr("x1", function(d) {
+                    return chart.x(
+                        d.values[d.last_lap].lap_position
+                    ) + (bw / 2)
+                })
+                .attr("y1", function(d) {
+                    return (chart.y_lap(d.last_lap))
 
-            new_drivers.filter(function(d) { return d.finish })
-            .append('line')
-            .style("stroke-dasharray", ("3, 3"))
-            .attr("x1", function(d) {
-                return chart.x(
-                    d.values[d.last_lap].lap_position
-                    ) + (bw / 2) 
-            })
-            .attr("y1", function(d) {
-                console.log(d);
-                return (chart.y_lap(d.last_lap))
+                })
+                .attr("x2", function(d) {
+                    return chart.x(d.finish) + (bw / 2)
+                })
+                .attr("y2", height + 40)
+                .attr('stroke', function(d) {
+                    return rdm.team_color(d.constructorRef, 2018);
+                })
+                .attr('stroke-width', Math.max(4, bw / 10))
 
-            })
-            .attr("x2", function(d) {
-                return chart.x(d.finish) + (bw / 2) 
-            })
-            .attr("y2", height + 40)
-            .attr('stroke', function(d) {
-                return rdm.team_color(d.constructorRef, 2018);
-            })
-            .attr('stroke-width', Math.max(4, bw / 12))
-
+            finishers.append('text')
+                .attr('transform',
+                    function(d) {
+                        var x = chart.x(d.finish) + (bw / 2);
+                        var y = height + 50;
+                        return 'translate(' + x + ',' + y + ') rotate(45)';
+                    }
+                )
+                .text(
+                    function(d) {
+                        return d.name
+                    }
+                );
 
 
         }

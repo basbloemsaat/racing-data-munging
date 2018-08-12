@@ -30,9 +30,9 @@ var rdm = {};
         data.sort(function(a, b) {
             key_a = sort_term_function(a);
             key_b = sort_term_function(b);
-            if(numeric) {
-                key_a = parseFloat(key_a)             
-                key_b = parseFloat(key_b)             
+            if (numeric) {
+                key_a = parseFloat(key_a)
+                key_b = parseFloat(key_b)
             }
             if (key_a > key_b) return (sort_direction == 'asc' ? 1 : -1);
             if (key_a < key_b) return (sort_direction == 'asc' ? -1 : 1);
@@ -64,13 +64,28 @@ var rdm = {};
             .attr('fill', 'url(#pattern-stripe)');
     }
 
+    this.text_color = function(c) {
+        var c = c.substring(1); // strip #
+        var rgb = parseInt(c, 16); // convert rrggbb to decimal
+        var r = (rgb >> 16) & 0xff; // extract red
+        var g = (rgb >> 8) & 0xff; // extract green
+        var b = (rgb >> 0) & 0xff; // extract blue
+
+        var luma = 0.2126 * r + 0.7152 * g + 0.0722 * b; // per ITU-R BT.709
+        if( luma < 128) {
+            return '#FFFFFF';
+        } else {
+            return '#000000'
+        }
+    }
+
     this.current_sort = {
         title: "none",
         order: "unsorted",
     }
 
     this.loaded_data = {};
-    
+
     var url_string = window.location.href;
     this.url = new URL(url_string);
 
