@@ -6,27 +6,6 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
     <link rel="stylesheet" href="inc/rdm.css">
     <style>
-    svg#all_seasons {
-        border: 0px solid red;
-        z-index: 1;
-    }
-
-    svg#all_seasons g.tick text {
-        font-size: 1.2em;
-    }
-
-    svg#all_seasons g.axis--y g.tick line {
-        opacity: 0.1;
-    }
-
-    rect.bar {
-        fill: CornflowerBlue;
-    }
-
-    rect.bar:hover {
-        fill: orange;
-    }
-
     .line {
         fill: none;
         stroke-linejoin: round;
@@ -35,6 +14,10 @@
     .striped {
         /*stroke: #000000;*/
         mask: url(#mask-stripe);
+    }
+
+    g.tick line {
+        opacity: 0.1;
     }
     </style>
 </head>
@@ -79,10 +62,12 @@
                 .attr("width", width + chart.margin.left + chart.margin.right)
                 .attr("height", height + chart.margin.top + chart.margin.bottom);
 
-            chart.x = d3.scaleBand().rangeRound([0, width]);
+            chart.x = d3.scaleBand().rangeRound([0, width*0.95]);
             chart.x_axis = d3.axisBottom(chart.x);
             chart.y_lap = d3.scaleLinear().rangeRound([0, height]);
-            chart.y_lap_axis = d3.axisLeft(chart.y_lap).ticks(10);
+            chart.y_lap_axis = d3.axisLeft(chart.y_lap).ticks(10)
+            .tickSize(-width)
+            .tickSizeOuter(0);
 
             chart.colors = d3.scaleOrdinal(d3.schemeSpectral[30]);
 
