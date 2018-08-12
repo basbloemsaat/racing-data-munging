@@ -239,7 +239,7 @@
                 .attr('class', 'header_name')
                 .attr('transform',
                     function(d) {
-                        var x = chart.x(d.finish) + (bw / 2);
+                        var x = chart.x(d.grid) + (bw / 2);
                         var y = 0;
                         return 'translate(' + x + ',' + y + ') rotate(-45)';
                     }
